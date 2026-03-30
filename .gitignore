@@ -1,0 +1,25 @@
+# 환경변수 (API 키)
+.env
+
+# 원본 파일 (민감 정보)
+data/raw/
+data/raw_new/
+
+# 파싱 결과 JSON
+data/parsed/
+
+# ChromaDB (GCS에서 따로 관리)
+data/vector_db/
+
+# Python 캐시
+__pycache__/
+*.pyc
+*.pyo
+
+# 가상환경
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
