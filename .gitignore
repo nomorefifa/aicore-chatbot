@@ -3,7 +3,7 @@
 
 # 원본 파일 (민감 정보)
 data/raw/
-data/raw_new/
+data/raw_pdf/
 
 # 파싱 결과 JSON
 data/parsed/
@@ -23,3 +23,6 @@ venv/
 # IDE
 .vscode/
 .idea/
+
+#claude
+data/docs/
