@@ -86,9 +86,9 @@ class EmbeddingStore:
             collection_name=collection_name,
             embedding_function=embedding_model,
             persist_directory=str(db_dir),
-            collection_metadata={"hnsw:space": "cosine"},
         )
-        logger.info(f"ChromaDB 연결 완료 | collection: {collection_name} | 저장 경로: {db_dir}")
+        count = self.db._collection.count()
+        logger.info(f"ChromaDB 연결 완료 | collection: {collection_name} | 저장 경로: {db_dir} | 문서 수: {count}")
 
     def add(self, chunks: list[Chunk], batch_size: int = 50) -> None:
         """
