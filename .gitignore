@@ -4,6 +4,7 @@
 # 원본 파일 (민감 정보)
 data/raw/
 data/raw_pdf/
+data/raw_new/
 
 # 파싱 결과 JSON
 data/parsed/
@@ -25,5 +26,6 @@ venv/
 .idea/
 
 # Claude Code
-data/docs/
+txt/
 .data/
+.claude/

@@ -1,0 +1,40 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: GCP 인증
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: gcloud 설정
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Docker 빌드 및 Artifact Registry 푸시
+        run: |
+          gcloud auth configure-docker asia-northeast3-docker.pkg.dev --quiet
+          docker build -t asia-northeast3-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/instructor-agent/app:${{ github.sha }} .
+          docker push asia-northeast3-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/instructor-agent/app:${{ github.sha }}
+
+      - name: Cloud Run 배포
+        run: |
+          gcloud run deploy instructor-agent \
+            --image asia-northeast3-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/instructor-agent/app:${{ github.sha }} \
+            --region asia-northeast3 \
+            --platform managed \
+            --set-secrets GOOGLE_API_KEY=GOOGLE_API_KEY:latest \
+            --memory 2Gi \
+            --min-instances 0 \
+            --max-instances 3 \
+            --timeout 300 \
+            --allow-unauthenticated

@@ -25,10 +25,12 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = SystemMessage(content=(
-    "당신은 강사 매칭 전문가입니다. "
-    "주어진 도구를 활용해 강사 정보를 검색하고 질문에 답변하세요. "
-    "필요하면 여러 도구를 순서대로 사용해도 됩니다. "
-    "강사 정보에 없는 내용은 '확인되지 않습니다'라고 답하세요."
+    "당신은 아이코어 내부 강사 관리 시스템입니다. "
+    "DB에는 각 강사의 이름, 연락처(전화번호), 이메일, 학력, 경력, 강의이력, 자격증, 전문분야 정보가 저장되어 있습니다. "
+    "반드시 도구를 먼저 사용하여 DB에서 데이터를 검색한 후 답변하세요. 도구 없이 추측하지 마세요. "
+    "검색된 데이터에 있는 연락처, 이메일 등 모든 정보를 그대로 제공하세요. "
+    "여러 도구를 순서대로 사용해도 됩니다. "
+    "도구를 사용해도 해당 데이터가 없는 경우에만 '확인되지 않습니다'라고 답하세요."
 ))
 
 
@@ -87,8 +89,36 @@ class ResumeAgent:
         logger.info(f"질문 [{thread_id}]: {question}")
         config = {"configurable": {"thread_id": thread_id}}
         result = self.agent.invoke({"messages": [("user", question)]}, config=config)
-        answer = result["messages"][-1].content
-        logger.info("답변 생성 완료")
+        messages = result["messages"]
+
+        # 이번 질문에 해당하는 메시지만 로깅
+        # messages에는 전체 대화 히스토리가 담기므로, 마지막 HumanMessage 이후 구간만 순회
+        from langchain_core.messages import HumanMessage
+        start_idx = 0
+        for i in range(len(messages) - 1, -1, -1):
+            if isinstance(messages[i], HumanMessage):
+                start_idx = i + 1
+                break
+
+        for msg in messages[start_idx:]:
+            if hasattr(msg, "tool_calls") and msg.tool_calls:
+                for tc in msg.tool_calls:
+                    logger.info(f"  → 도구 호출: {tc['name']} | 입력: {tc['args']}")
+            elif hasattr(msg, "name") and msg.name:
+                preview = msg.content[:120].replace("\n", " ")
+                logger.info(f"  ← 도구 결과 [{msg.name}]: {preview}...")
+
+        answer = messages[-1].content
+        # Gemini 2.5 Flash는 content를 list of blocks로 반환할 수 있음
+        # [{'type': 'text', 'text': '...', 'extras': {'signature': '...'}}]
+        # 로그 및 반환값 모두 순수 텍스트로 추출
+        if isinstance(answer, list):
+            answer = "\n".join(
+                block["text"]
+                for block in answer
+                if isinstance(block, dict) and block.get("type") == "text"
+            )
+        logger.info(f"답변 [{thread_id}]: {answer}")
         return answer
 
     def ask_with_steps(self, question: str, thread_id: str = "default") -> dict:

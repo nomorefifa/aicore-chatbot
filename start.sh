@@ -7,4 +7,4 @@ gsutil -m cp -r gs://test-icore-vector-db/vector_db/ data/ || echo "vector_db �
 
 # 앱 실행
 echo "앱 시작..."
-python app.py
+python gradio_app.py
