@@ -23,13 +23,13 @@ jobs:
       - name: Docker 빌드 및 Artifact Registry 푸시
         run: |
           gcloud auth configure-docker asia-northeast3-docker.pkg.dev --quiet
-          docker build -t asia-northeast3-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/instructor-agent/app:${{ github.sha }} .
-          docker push asia-northeast3-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/instructor-agent/app:${{ github.sha }}
+          docker build -t asia-northeast3-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/aicore-chatbot-image/app:${{ github.sha }} .
+          docker push asia-northeast3-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/aicore-chatbot-image/app:${{ github.sha }}
 
       - name: Cloud Run 배포
         run: |
           gcloud run deploy instructor-agent \
-            --image asia-northeast3-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/instructor-agent/app:${{ github.sha }} \
+            --image asia-northeast3-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/aicore-chatbot-image/app:${{ github.sha }} \
             --region asia-northeast3 \
             --platform managed \
             --set-secrets GOOGLE_API_KEY=GOOGLE_API_KEY:latest \
