@@ -31,7 +31,4 @@ txt/
 .claude/
 
 # test code
-test/db_test.ipynb
-test/api_test.py
-test/data_survey.py
-test/parsing_test.py
+test/
