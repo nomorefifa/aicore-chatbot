@@ -12,7 +12,7 @@ except Exception as e:
     print(f"LLM 에러 발생: {e}")
 
 # 2. Embedding 테스트
-embeddings = GoogleGenerativeAIEmbeddings(model="gemini-embedding-004")
+embeddings = GoogleGenerativeAIEmbeddings(model="gemini-embedding-001")
 try:
     result = embeddings.embed_query("테스트")
     print(f"임베딩 차원: {len(result)}")  # 768
