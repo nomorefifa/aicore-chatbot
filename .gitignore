@@ -35,4 +35,4 @@ txt/
 test/
 
 #gcp
-convert_to_bq.py
+convert_to_bq_test.py

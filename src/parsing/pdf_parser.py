@@ -14,7 +14,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from tqdm import tqdm
 
 from .models import Chunk, ResumeData
-from .resume_parser import ResumeChunker, PARSE_PROMPT
+from .base_parser import ResumeChunker, PARSE_PROMPT
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -91,40 +91,3 @@ class PDFResumeParser:
 
         logger.info(f"파싱 완료: {len(results)}/{len(files)}개 성공")
         return results
-
-
-def run_pdf_pipeline(
-    raw_dir: str | Path = "data/raw",
-    parsed_dir: str | Path = "data/parsed",
-    model: str = "gemini-2.5-flash",
-) -> list[Chunk]:
-    """
-    PDF 전체 파이프라인 실행:
-    data/raw/*.pdf → 파싱 → 청킹 → data/parsed/{강사명}.json 저장 → 청크 목록 반환
-
-    청킹/저장 로직은 기존 resume_parser.py와 동일하게 ResumeChunker 재사용
-    """
-    raw_dir = Path(raw_dir)
-    parsed_dir = Path(parsed_dir)
-    parsed_dir.mkdir(parents=True, exist_ok=True)
-
-    parser = PDFResumeParser(model=model)
-    chunker = ResumeChunker()
-
-    parse_results = parser.parse_all(raw_dir)
-
-    all_chunks: list[Chunk] = []
-    for file_path, resume in parse_results:
-        # 파싱 결과 JSON 저장 (docx와 같은 폴더에 저장 → 통합 관리)
-        output_path = parsed_dir / f"{resume.instructor_name}.json"
-        output_path.write_text(
-            resume.model_dump_json(indent=2, ensure_ascii=False),
-            encoding="utf-8",
-        )
-
-        chunks = chunker.chunk(resume, file_name=file_path.name)
-        all_chunks.extend(chunks)
-        logger.info(f"{resume.instructor_name}: {len(chunks)}개 청크 생성")
-
-    logger.info(f"PDF 파이프라인 완료 | 총 {len(all_chunks)}개 청크")
-    return all_chunks

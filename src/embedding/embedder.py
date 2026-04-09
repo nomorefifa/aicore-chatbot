@@ -116,7 +116,14 @@ class EmbeddingStore:
             batch_docs = documents[i : i + batch_size]
             batch_ids = ids[i : i + batch_size]
 
-            self.db.add_documents(documents=batch_docs, ids=batch_ids)
+            self.db._collection.upsert(
+                ids=batch_ids,
+                documents=[d.page_content for d in batch_docs],
+                metadatas=[d.metadata for d in batch_docs],
+                embeddings=self.db._embedding_function.embed_documents(
+                    [d.page_content for d in batch_docs]
+                ),
+            )
             logger.info(f"  저장 완료: {i + len(batch_docs)}/{len(documents)}")
 
         logger.info(f"전체 저장 완료 | DB 총 청크 수: {self.count()}")
