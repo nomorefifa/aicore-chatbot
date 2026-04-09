@@ -5,12 +5,17 @@ RAG 체인과의 차이:
     RAG 체인: 질문 → 검색 1번 → 답변 (흐름 고정)
     Agent   : 질문 → LLM이 도구 선택 → 필요하면 여러 번 검색 → 복잡한 질의 처리
 
-새 문서 유형 추가 시:
-    1. src/parsing/{새문서}_parser.py 작성
-    2. src/rag/tools/{새문서}_tools.py 작성
-    3. 아래 ResumeAgent.__init__에서 tools 목록에 추가
+도구 세트 전환:
+    .env에서 USE_GCP_SERVICES=false → ChromaDB 기반 도구 (로컬)
+    .env에서 USE_GCP_SERVICES=true  → Vertex AI Search + BigQuery (GCP)
+
+새 도구 추가 시:
+    src/rag/tools/chromadb/ → ChromaDB 기반 도구
+    src/rag/tools/gcp/      → GCP 서비스 기반 도구
+    src/rag/tools/__init__.py의 get_tools()에 등록
 """
 
+import os
 import logging
 from dotenv import load_dotenv
 from langchain_core.messages import SystemMessage
@@ -18,10 +23,10 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
 
-from src.embedding.embedder import EmbeddingStore
-from src.rag.tools import get_resume_tools
+from src.rag.tools import get_tools
 
-load_dotenv()
+load_dotenv(override=True)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = SystemMessage(content=(
@@ -61,11 +66,16 @@ class ResumeAgent:
         db_dir: str = "data/vector_db",
     ):
         llm = ChatGoogleGenerativeAI(model=model, temperature=0)
-        store = EmbeddingStore(collection_name=collection_name, db_dir=db_dir)
 
-        # 도구 목록 - 새 문서 유형 추가 시 여기에 추가
-        # 예: tools = get_resume_tools(store) + get_lecture_tools(lecture_store)
-        tools = get_resume_tools(store)
+        use_gcp = os.getenv("USE_GCP_SERVICES", "false").lower() == "true"
+        if use_gcp:
+            tools = get_tools()
+            logger.info("GCP 모드: Vertex AI Search + BigQuery")
+        else:
+            from src.embedding.embedder import EmbeddingStore
+            store = EmbeddingStore(collection_name=collection_name, db_dir=db_dir)
+            tools = get_tools(store)
+            logger.info("로컬 모드: ChromaDB")
 
         # MemorySaver: 세션별 대화기록을 메모리에 유지
         # thread_id가 같으면 같은 대화로 인식, 다르면 독립된 새 대화

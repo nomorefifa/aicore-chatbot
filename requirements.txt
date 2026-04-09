@@ -24,3 +24,7 @@ gradio>=4.0.0
 # Utilities
 python-dotenv>=1.0.0
 tqdm>=4.66.0
+
+# GCP 서비스 (USE_GCP_SERVICES=true 시 사용)
+google-cloud-discoveryengine
+google-cloud-bigquery
