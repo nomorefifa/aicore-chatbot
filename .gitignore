@@ -33,6 +33,7 @@ txt/
 
 # test code
 test/
+tmp/
 
 #gcp
 convert_to_bq_test.py

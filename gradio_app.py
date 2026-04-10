@@ -23,11 +23,14 @@ def chat(message: str, history: list, request: gr.Request) -> str:
 demo = gr.ChatInterface(
     fn=chat,
     title="아이코어 챗봇",
-    description="강사 정보를 검색하고 추천받을 수 있습니다.",
+    description="강사 정보 검색 및 커리큘럼 생성/추천을 도와드립니다.",
     examples=[
         "Python이랑 데이터분석 둘 다 가능한 강사 추천해줘",
         "AI 관련 강의 경험 있는 강사 알려줘",
         "현재 보유한 강사 리스트 뽑아줘",
+        "비전공 대학생 대상 Python 데이터분석 160시간 커리큘럼 만들어줘",
+        "AWS 클라우드 초급 과정 80시간 커리큘럼 추천해줘",
+        "LLM 서비스 개발 기업 현직자 대상 커리큘럼 만들어줘",
     ],
 )
 

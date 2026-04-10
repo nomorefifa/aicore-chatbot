@@ -138,9 +138,19 @@ class EmbeddingStore:
         logger.info(f"컬렉션 초기화 완료: {self.collection_name}")
 
     def _make_id(self, chunk: Chunk) -> str:
-        """청크 고유 ID 생성: 강사명_섹션_인덱스"""
-        name = chunk.metadata.get("instructor_name", "unknown")
-        section = chunk.metadata.get("section", "unknown")
-        idx = chunk.metadata.get("teaching_index", "")
-        suffix = f"_{idx}" if idx != "" else ""
-        return f"{name}_{section}{suffix}"
+        """청크 고유 ID 생성 (문서 타입 무관)"""
+        meta = chunk.metadata
+
+        # 주체 식별자: 강사명 or 과정명
+        name = meta.get("instructor_name") or meta.get("course_name", "unknown")
+
+        section = meta.get("section", "unknown")
+
+        # 인덱스: 있는 필드 중 하나 사용
+        idx = ""
+        for field in ("teaching_index", "module_index", "week_number"):
+            if field in meta:
+                idx = f"_{meta[field]}"
+                break
+
+        return f"{name}_{section}{idx}"
