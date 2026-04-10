@@ -33,7 +33,7 @@ def chat(message: str, history: list, request: gr.Request) -> str:
 chatbot_tab = gr.ChatInterface(
     fn=chat,
     title="아이코어 챗봇",
-    description="강사 정보 검색 및 커리큘럼 생성/추천을 도와드립니다.",
+    description="강사 정보 검색 및 커리큘럼 생성/추천을 포함한 아이코어 사내 데이터를 기반으로 업무를 도와드립니다.",
     examples=[
         "Python이랑 데이터분석 둘 다 가능한 강사 추천해줘",
         "AI 관련 강의 경험 있는 강사 알려줘",
