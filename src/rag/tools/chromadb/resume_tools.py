@@ -1,9 +1,9 @@
 """
-강사 이력서 검색 도구 모음
+강사 이력서 검색 도구 모음 (ChromaDB 기반)
 
-새 문서 유형 추가 시 동일한 패턴으로 새 파일 생성:
-    tools/lecture_tools.py   → 강의자료 도구
-    tools/contract_tools.py  → 계약서 도구
+새 도구 추가 시 동일한 패턴으로 작성:
+    tools/chromadb/lecture_tools.py   → 강의자료 도구
+    tools/chromadb/contract_tools.py  → 계약서 도구
 """
 
 from langchain_core.tools import tool
@@ -42,7 +42,6 @@ def get_resume_tools(store: EmbeddingStore) -> list:
         if not docs:
             return "관련 강사를 찾지 못했습니다."
 
-        # 강사별로 묶기 — 같은 강사가 여러 섹션에서 중복 등장하지 않도록
         seen: dict[str, list[str]] = {}
         for doc in docs:
             name = doc.metadata["instructor_name"]
@@ -82,8 +81,6 @@ def get_resume_tools(store: EmbeddingStore) -> list:
         if not matched_name:
             return f"'{instructor_name}' 강사를 찾지 못했습니다. 이름을 다시 확인하세요."
 
-        # 이름이 확정된 이후에는 similarity_search 대신 _collection.get()으로
-        # 해당 강사의 모든 청크를 빠짐없이 가져옴
         result = store.db._collection.get(
             where={"instructor_name": matched_name},
             include=["documents", "metadatas"],

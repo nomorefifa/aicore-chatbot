@@ -116,7 +116,14 @@ class EmbeddingStore:
             batch_docs = documents[i : i + batch_size]
             batch_ids = ids[i : i + batch_size]
 
-            self.db.add_documents(documents=batch_docs, ids=batch_ids)
+            self.db._collection.upsert(
+                ids=batch_ids,
+                documents=[d.page_content for d in batch_docs],
+                metadatas=[d.metadata for d in batch_docs],
+                embeddings=self.db._embedding_function.embed_documents(
+                    [d.page_content for d in batch_docs]
+                ),
+            )
             logger.info(f"  저장 완료: {i + len(batch_docs)}/{len(documents)}")
 
         logger.info(f"전체 저장 완료 | DB 총 청크 수: {self.count()}")
@@ -131,9 +138,19 @@ class EmbeddingStore:
         logger.info(f"컬렉션 초기화 완료: {self.collection_name}")
 
     def _make_id(self, chunk: Chunk) -> str:
-        """청크 고유 ID 생성: 강사명_섹션_인덱스"""
-        name = chunk.metadata.get("instructor_name", "unknown")
-        section = chunk.metadata.get("section", "unknown")
-        idx = chunk.metadata.get("teaching_index", "")
-        suffix = f"_{idx}" if idx != "" else ""
-        return f"{name}_{section}{suffix}"
+        """청크 고유 ID 생성 (문서 타입 무관)"""
+        meta = chunk.metadata
+
+        # 주체 식별자: 강사명 or 과정명
+        name = meta.get("instructor_name") or meta.get("course_name", "unknown")
+
+        section = meta.get("section", "unknown")
+
+        # 인덱스: 있는 필드 중 하나 사용
+        idx = ""
+        for field in ("teaching_index", "module_index", "week_number"):
+            if field in meta:
+                idx = f"_{meta[field]}"
+                break
+
+        return f"{name}_{section}{idx}"

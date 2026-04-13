@@ -5,6 +5,7 @@
 data/raw/
 data/raw_pdf/
 data/raw_new/
+data/parsed_bq.jsonl
 
 # 파싱 결과 JSON
 data/parsed/
@@ -32,3 +33,7 @@ txt/
 
 # test code
 test/
+tmp/
+
+#gcp
+convert_to_bq_test.py
