@@ -37,6 +37,11 @@ if _template_path.exists():
         _html,
     )
     _html = re.sub(r"<title>.*?</title>", "<title>아이코어 통합 챗봇</title>", _html)
+    _desc = '<meta property="og:description" content="아이코어 사내 데이터를 기반으로 업무를 도와드립니다." />'
+    if 'og:description' in _html:
+        _html = re.sub(r'<meta\s+property="og:description"[^>]*>', _desc, _html)
+    else:
+        _html = _html.replace("</title>", f"</title>\n    {_desc}", 1)
     _template_path.write_text(_html, encoding="utf-8")
 from src.zoom.zoom_log_processor import process_zoom_log
 
@@ -124,16 +129,10 @@ with gr.Blocks() as zoom_tab:
 
 # ── 앱 실행 ───────────────────────────────────────────────────────────────────
 
-HTML_HEAD = """
-<meta property="og:title" content="아이코어 챗봇">
-<meta property="og:description" content="사내 데이터를 기반으로 업무를 도와드립니다.">
-<meta property="og:image" content="https://aicorechatbot.site/aicore_logo.png"> 
-"""
-
-with gr.Blocks(head=HTML_HEAD) as demo:
+with gr.Blocks() as demo:
     with gr.Tab("챗봇"):
         chatbot_tab.render()
-    with gr.Tab("줌 출석 집계"):
+    with gr.Tab("줌 출석로그 집계"):
         zoom_tab.render()
 
 if __name__ == "__main__":
