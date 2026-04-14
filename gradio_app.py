@@ -1,3 +1,30 @@
+import re
+from pathlib import Path
+
+template_path = Path(gr.__file__).parent / "templates" / "frontend" / "index.html"
+if template_path.exists():
+    html_content = template_path.read_text(encoding="utf-8")
+    
+    # 카카오톡 로봇이 읽을 수 있도록 순수 HTML의 사진과 제목을 직접 교체 (정규식 사용)
+    html_content = re.sub(
+        r'<meta\s+property="og:image"[^>]*>', 
+        '<meta property="og:image" content="https://aicorechatbot.site/aicore_logo.png" />', 
+        html_content
+    )
+    html_content = re.sub(
+        r'<meta\s+property="og:title"[^>]*>', 
+        '<meta property="og:title" content="아이코어 통합 챗봇" />', 
+        html_content
+    )
+    html_content = re.sub(
+        r'<title>.*?</title>', 
+        '<title>아이코어 통합 챗봇</title>', 
+        html_content
+    )
+    
+    # 덮어쓰기 저장
+    template_path.write_text(html_content, encoding="utf-8")
+
 """
 아이코어 통합 UI (Gradio)
 실행: python gradio_app.py
