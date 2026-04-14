@@ -39,8 +39,8 @@ chatbot_tab = gr.ChatInterface(
         "AI 관련 강의 경험 있는 강사 알려줘",
         "현재 보유한 강사 리스트 뽑아줘",
         "비전공 대학생 대상 Python 데이터분석 160시간 커리큘럼 만들어줘",
-        "AWS 클라우드 초급 과정 80시간 커리큘럼 추천해줘",
-        "LLM 서비스 개발 기업 현직자 대상 커리큘럼 만들어줘",
+        "최신 클라우드 기술 동향을 반영한 대학생 전공자 대상 DevOps 80시간 커리큘럼 추천해줘",
+        "LLM 서비스 개발 기업 현직자 대상 커리큘럼 만들어줘"
     ],
 )
 
@@ -77,8 +77,14 @@ with gr.Blocks() as zoom_tab:
     gr.Markdown("## 줌 출석 집계")
     gr.Markdown(
         "줌 로그 CSV 파일을 업로드하면 학생별 총 참석 시간을 자동으로 집계합니다.\n\n"
-        "- 같은 학생이 다른 이름으로 찍힌 경우 자동 병합 (예: `당감초 안한비 (iPhone)` + `당감초 안한비 (안 한비)` → `당감초 안한비`)\n"
-        "- 결과는 표로 확인하고 CSV 파일로 다운로드할 수 있습니다."
+        "**출력 항목:** 주제 · 수업 시작/종료 시간 · 학생이름 · 총 시간(분) · 첫 입장시간 · 최종 퇴실시간\n\n"
+        "---\n\n"
+        "**⚠️ 주의사항**\n\n"
+        "- 반드시 **줌(Zoom)에서 내보내기한 CSV 파일**을 업로드해주세요. `.xlsx` 등 다른 형식은 지원하지 않습니다.\n"
+        "- 같은 참석자가 다른 이름으로 찍힌 경우 자동 병합됩니다.\n"
+        "  (예: `당감초 안한비 (iPhone)` + `당감초 안한비 (안 한비)` → `당감초 안한비`, `환서초등학교_박정희 (Samsung SM-S911N)` + `환서초등학교_박정희` → `환서초등학교_박정희`)\n"
+        "- **첫 입장시간 / 최종 퇴실시간**은 개별 접속 기록이 포함된 파일에서만 표시됩니다.\n"
+        "  참석자별 입장, 퇴장시간이 없는 경우는 해당 항목이 `-`로 표시됩니다.\n"
     )
 
     with gr.Row():
@@ -98,11 +104,17 @@ with gr.Blocks() as zoom_tab:
 
 # ── 앱 실행 ───────────────────────────────────────────────────────────────────
 
-with gr.TabbedInterface(
-    [chatbot_tab, zoom_tab],
-    tab_names=["챗봇", "줌 출석 집계"],
-) as demo:
-    pass
+HTML_HEAD = """
+<meta property="og:title" content="아이코어 챗봇">
+<meta property="og:description" content="사내 데이터를 기반으로 업무를 도와드립니다.">
+<meta property="og:image" content="https://aicorechatbot.site/aicore_logo.png"> 
+"""
+
+with gr.Blocks(head=HTML_HEAD) as demo:
+    with gr.Tab("챗봇"):
+        chatbot_tab.render()
+    with gr.Tab("줌 출석 집계"):
+        zoom_tab.render()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 7860))

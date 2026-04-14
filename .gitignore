@@ -34,6 +34,10 @@ txt/
 # test code
 test/
 tmp/
+chatbot-architecture.png
 
 #gcp
 convert_to_bq_test.py
+
+# firebase
+.firebase/
