@@ -104,9 +104,14 @@ with gr.Blocks() as zoom_tab:
 
 # ── 앱 실행 ───────────────────────────────────────────────────────────────────
 
+HTML_HEAD = """
+<meta property="og:image" content="https://aicorechatbot.site/aicore_logo.png"> 
+"""
+
 with gr.TabbedInterface(
     [chatbot_tab, zoom_tab],
     tab_names=["챗봇", "줌 출석 집계"],
+    head=HTML_HEAD
 ) as demo:
     pass
 
