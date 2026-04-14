@@ -1,30 +1,3 @@
-import re
-from pathlib import Path
-
-template_path = Path(gr.__file__).parent / "templates" / "frontend" / "index.html"
-if template_path.exists():
-    html_content = template_path.read_text(encoding="utf-8")
-    
-    # 카카오톡 로봇이 읽을 수 있도록 순수 HTML의 사진과 제목을 직접 교체 (정규식 사용)
-    html_content = re.sub(
-        r'<meta\s+property="og:image"[^>]*>', 
-        '<meta property="og:image" content="https://aicorechatbot.site/aicore_logo.png" />', 
-        html_content
-    )
-    html_content = re.sub(
-        r'<meta\s+property="og:title"[^>]*>', 
-        '<meta property="og:title" content="아이코어 통합 챗봇" />', 
-        html_content
-    )
-    html_content = re.sub(
-        r'<title>.*?</title>', 
-        '<title>아이코어 통합 챗봇</title>', 
-        html_content
-    )
-    
-    # 덮어쓰기 저장
-    template_path.write_text(html_content, encoding="utf-8")
-
 """
 아이코어 통합 UI (Gradio)
 실행: python gradio_app.py
@@ -40,11 +13,31 @@ if template_path.exists():
 """
 
 import os
+import re
 import tempfile
+from pathlib import Path
 
 import gradio as gr
 
 from src.rag.agent import ResumeAgent
+
+# 카카오톡 미리보기용 OG 태그를 Gradio 템플릿에 직접 주입
+# (Gradio의 head= 파라미터는 JS 렌더링 후 삽입되므로 크롤러가 못 읽음)
+_template_path = Path(gr.__file__).parent / "templates" / "frontend" / "index.html"
+if _template_path.exists():
+    _html = _template_path.read_text(encoding="utf-8")
+    _html = re.sub(
+        r'<meta\s+property="og:image"[^>]*>',
+        '<meta property="og:image" content="https://aicorechatbot.site/aicore_logo.png" />',
+        _html,
+    )
+    _html = re.sub(
+        r'<meta\s+property="og:title"[^>]*>',
+        '<meta property="og:title" content="아이코어 통합 챗봇" />',
+        _html,
+    )
+    _html = re.sub(r"<title>.*?</title>", "<title>아이코어 통합 챗봇</title>", _html)
+    _template_path.write_text(_html, encoding="utf-8")
 from src.zoom.zoom_log_processor import process_zoom_log
 
 agent = ResumeAgent(db_dir="data/vector_db")
