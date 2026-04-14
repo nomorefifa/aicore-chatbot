@@ -39,8 +39,8 @@ chatbot_tab = gr.ChatInterface(
         "AI 관련 강의 경험 있는 강사 알려줘",
         "현재 보유한 강사 리스트 뽑아줘",
         "비전공 대학생 대상 Python 데이터분석 160시간 커리큘럼 만들어줘",
-        "AWS 클라우드 초급 과정 80시간 커리큘럼 추천해줘",
-        "LLM 서비스 개발 기업 현직자 대상 커리큘럼 만들어줘",
+        "최신 클라우드 기술 동향을 반영한 대학생 전공자 대상 DevOps 80시간 커리큘럼 추천해줘",
+        "LLM 서비스 개발 기업 현직자 대상 커리큘럼 만들어줘"
     ],
 )
 
@@ -105,15 +105,16 @@ with gr.Blocks() as zoom_tab:
 # ── 앱 실행 ───────────────────────────────────────────────────────────────────
 
 HTML_HEAD = """
+<meta property="og:title" content="아이코어 챗봇">
+<meta property="og:description" content="사내 데이터를 기반으로 업무를 도와드립니다.">
 <meta property="og:image" content="https://aicorechatbot.site/aicore_logo.png"> 
 """
 
-with gr.TabbedInterface(
-    [chatbot_tab, zoom_tab],
-    tab_names=["챗봇", "줌 출석 집계"],
-    head=HTML_HEAD
-) as demo:
-    pass
+with gr.Blocks(head=HTML_HEAD) as demo:
+    with gr.Tab("챗봇"):
+        chatbot_tab.render()
+    with gr.Tab("줌 출석 집계"):
+        zoom_tab.render()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 7860))

@@ -18,20 +18,24 @@ def get_web_search_tool() -> list:
         기존 DB 결과가 부족하거나 최신 정보가 필요할 때만 사용하세요.
         예: '2025 백엔드 개발자 교육 트렌드', 'LLM 커리큘럼 최신 동향'
         """
-        import google.generativeai as genai
+        from google import genai as google_genai
+        from google.genai import types
 
-        genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+        client = google_genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
-        model = genai.GenerativeModel(
-            model_name="gemini-2.5-flash",
-            tools="google_search_retrieval",
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=query,
+            config=types.GenerateContentConfig(
+                tools=[types.Tool(google_search=types.GoogleSearch())],
+            ),
         )
-
-        response = model.generate_content(query)
 
         # 텍스트 응답 추출
         if response.candidates:
-            return response.candidates[0].content.parts[0].text
+            parts = response.candidates[0].content.parts
+            texts = [p.text for p in parts if hasattr(p, "text") and p.text]
+            return "\n".join(texts) if texts else "검색 결과를 가져오지 못했습니다."
         return "검색 결과를 가져오지 못했습니다."
 
     return [web_search]
