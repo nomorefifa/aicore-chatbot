@@ -38,3 +38,9 @@ jobs:
             --max-instances 3 \
             --timeout 300 \
             --allow-unauthenticated
+
+      - name: 트래픽 최신 revision으로 전환
+        run: |
+          gcloud run services update-traffic instructor-agent \
+            --to-latest \
+            --region asia-northeast3
