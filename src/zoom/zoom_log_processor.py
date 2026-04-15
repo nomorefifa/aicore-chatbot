@@ -36,10 +36,16 @@ import pandas as pd
 
 def _extract_base_name(name: str) -> str:
     """
-    ' (' 패턴을 기준으로 기준 이름 추출.
-    '당감초 안한비 (iPhone)' → '당감초 안한비'
-    '분포초_신은서' → '분포초_신은서'
+    괄호 패턴 제거로 기준 이름 추출.
+    '당감초 안한비 (iPhone)' → '당감초 안한비'   # 뒤 괄호
+    '(천안용소초)이은미'     → '이은미'           # 앞 괄호 (학교정보가 괄호 안에)
+    '분포초_신은서'          → '분포초_신은서'
     """
+    # 앞 괄호 패턴: (기관명)이름 형태
+    leading = re.match(r"^\(.*?\)\s*", name)
+    if leading:
+        return name[leading.end():].strip()
+    # 뒤 괄호 패턴: 이름 (부가정보) 형태
     match = re.search(r"\s+\(", name)
     if match:
         return name[: match.start()].strip()
@@ -54,6 +60,8 @@ def _normalize_name(name: str) -> str:
     3. 구분자 통일: 공백 / 하이픈 → 언더스코어
     4. 연속 언더스코어 정리
     """
+    # 0. 보이지 않는 특수문자 제거 (소프트 하이픈, 영폭 공백 등)
+    name = re.sub(r"[\u00ad\u200b-\u200f\u2028\u2029\ufeff]", "", name)
     # 1. 연속 공백 → 단일 공백
     name = re.sub(r" +", " ", name).strip()
     # 2. 약칭 확장: '초' 뒤에 '등'이 없는 경우 → '초등학교'
@@ -85,13 +93,15 @@ def _gemini_group_names(names: list[str]) -> dict[str, str]:
 
 [병합 규칙 - 아래 조건을 모두 충족해야만 같은 사람으로 판단]
 1. 사람 이름(성+이름)이 완전히 동일해야 합니다. 사람 이름이 조금이라도 다르면 다른 사람입니다.
-2. 학교명 약칭(도하초)과 전체명(도하초등학교)은 같은 학교로 봅니다.
+2. 학교/기관명 약칭(도하초)과 전체명(도하초등학교)은 같은 학교로 봅니다.
 3. 구분자 '_', '-', 공백은 같은 것으로 봅니다.
-4. 확실하지 않으면 병합하지 말고 별도 그룹으로 유지하세요.
+4. 학교/기관명에 한 글자 오타가 있어도(예: 나사렛새꿈학교 ↔ 나사렛새꿈힉교) 사람 이름이 동일하면 같은 사람으로 판단합니다.
+5. 확실하지 않으면 병합하지 말고 별도 그룹으로 유지하세요.
 
 [병합 예시]
 - "도하초 박상욱"과 "도하초등학교 박상욱" → 사람이름 동일(박상욱) → 병합 O
 - "안서초_이강민"과 "안서초등학교-이강민" → 사람이름 동일(이강민) → 병합 O
+- "나사렛새꿈학교 송경자"와 "나사렛새꿈힉교 송경자" → 기관명 오타, 사람이름 동일(송경자) → 병합 O
 - "천안청수초 배은주"와 "천안청수초 류병선" → 사람이름 다름 → 병합 X
 
 참석자 이름 목록:
@@ -102,9 +112,14 @@ def _gemini_group_names(names: list[str]) -> dict[str, str]:
 병합 대상이 없는 이름도 반드시 포함시키세요(포함이름에 자기 자신만 넣으면 됩니다):
 {{"그룹": [{{"대표이름": "포함이름중하나", "포함이름": ["원본이름A", "원본이름B"]}}, ...]}}"""
 
+        from google.genai import types as genai_types
+
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=prompt,
+            config=genai_types.GenerateContentConfig(
+                thinking_config=genai_types.ThinkingConfig(thinking_budget=0)
+            ),
         )
         text = response.text.strip()
 
@@ -227,11 +242,6 @@ def process_zoom_log(file_bytes: bytes) -> tuple[pd.DataFrame, bytes]:
     df = df[df["이름"].notna() & df["시간(분)"].notna()].copy()
     df["시간(분)"] = pd.to_numeric(df["시간(분)"], errors="coerce")
     df = df[df["시간(분)"].notna()].copy()
-
-    # 호스트/운영자 제외 (이메일 있으면서 게스트=아니요)
-    if "이메일" in df.columns and "게스트" in df.columns:
-        is_operator = df["이메일"].notna() & (df["게스트"] == "아니요")
-        df = df[~is_operator].copy()
 
     # 1단계: 괄호 제거로 기준 이름 추출 (규칙 기반)
     df["학생이름"] = df["이름"].apply(_extract_base_name)
