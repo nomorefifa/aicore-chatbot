@@ -118,7 +118,8 @@ def _gemini_group_names(names: list[str]) -> dict[str, str]:
             model="gemini-2.5-flash",
             contents=prompt,
             config=genai_types.GenerateContentConfig(
-                thinking_config=genai_types.ThinkingConfig(thinking_budget=0)
+                temperature=0.0,
+                thinking_config=genai_types.ThinkingConfig(thinking_budget=0),
             ),
         )
         text = response.text.strip()
