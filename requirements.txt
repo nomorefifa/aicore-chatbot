@@ -27,6 +27,10 @@ gradio>=4.0.0
 python-dotenv>=1.0.0
 tqdm>=4.66.0
 
-# GCP 서비스 (USE_GCP_SERVICES=true 시 사용)
+# Google AI SDK
+google-genai
+
+# GCP 서비스
+google-cloud-storage
 google-cloud-discoveryengine
 google-cloud-bigquery
