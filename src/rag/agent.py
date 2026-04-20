@@ -85,7 +85,7 @@ def _build_system_prompt() -> SystemMessage:
 
     "■ STEP 4. 커리큘럼 생성 (generate_curriculum 도구 사용)\n"
     "  STEP 1~3에서 수집한 모든 정보를 정리하여 generate_curriculum 도구에 전달하세요.\n"
-    "  이 도구는 고성능 Pro 모델을 사용하여 고품질 커리큘럼을 생성합니다.\n"
+    "  이 도구는 전용 모델을 사용하여 고품질 커리큘럼을 생성합니다.\n"
     "  context에 반드시 포함할 내용:\n"
     "    [요구사항] 교육 분야, 대상, 시간, 수준, 이론/실습 구성, 목적\n"
     "    [DB 참고] search_curriculum/get_curriculum_detail 결과 (있는 경우)\n"
