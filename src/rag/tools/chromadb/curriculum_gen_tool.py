@@ -1,15 +1,15 @@
 """
-커리큘럼 생성 전용 도구 (Gemini Pro 모델 사용)
+커리큘럼 생성 전용 도구
 
 Agent(Flash)가 정보 수집(DB 검색, 웹 검색)을 담당하고,
-실제 커리큘럼 생성은 이 도구를 통해 Pro 모델에 위임합니다.
+실제 커리큘럼 생성은 이 도구를 통해 별도 모델에 위임합니다.
 
 흐름:
     Agent(Flash)
         → STEP 1: 사용자에게 필수 정보 확인
         → STEP 2: search_curriculum / get_curriculum_detail 호출
         → STEP 3: web_search 호출 (필요시)
-        → STEP 4: generate_curriculum 호출 (수집한 정보 전달 → Pro 모델 생성)
+        → STEP 4: generate_curriculum 호출 (수집한 정보 전달)
         → Agent(Flash)가 결과를 사용자에게 전달
 """
 
@@ -20,7 +20,7 @@ from langchain_core.tools import tool
 
 logger = logging.getLogger(__name__)
 
-CURRICULUM_GEN_MODEL = os.getenv("CURRICULUM_GEN_MODEL", "gemini-2.5-pro")
+CURRICULUM_GEN_MODEL = os.getenv("CURRICULUM_GEN_MODEL", "gemini-2.5-flash")
 
 
 def _build_curriculum_system_instruction() -> str:
@@ -105,7 +105,7 @@ def get_curriculum_gen_tool() -> list:
     def generate_curriculum(context: str) -> str:
         """
         수집한 정보를 바탕으로 고품질 커리큘럼을 생성합니다.
-        이 도구는 고성능 Pro 모델을 사용하므로 커리큘럼 최종 생성 시에만 호출하세요.
+        커리큘럼 최종 생성 시에만 호출하세요.
 
         STEP 1~3을 통해 수집한 모든 정보를 context에 포함하세요:
         - 사용자 요구사항: 교육 분야, 교육 대상, 총 교육 시간, 수준, 이론/실습 구성, 교육 목적
