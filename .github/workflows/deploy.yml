@@ -37,6 +37,7 @@ jobs:
             --min-instances 0 \
             --max-instances 3 \
             --timeout 300 \
+            --session-affinity \
             --allow-unauthenticated
 
       - name: 트래픽 최신 revision으로 전환
