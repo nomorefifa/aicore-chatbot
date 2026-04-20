@@ -151,37 +151,57 @@ class ResumeAgent:
 
         logger.info(f"Agent 준비 완료 | 날짜: {date.today()} | 모델: {model} | 도구: {[t.name for t in tools]}")
 
-    def ask(self, question: str, thread_id: str = "default") -> str:
-        """질문을 받아 Agent 실행 후 최종 답변 반환."""
+    def ask(self, question: str, thread_id: str = "default", max_retries: int = 2) -> str:
+        """질문을 받아 Agent 실행 후 최종 답변 반환. 빈 답변 시 자동 재시도."""
         logger.info(f"질문 [{thread_id}]: {question}")
         config = {"configurable": {"thread_id": thread_id}}
-        result = self.agent.invoke({"messages": [("user", question)]}, config=config)
-        messages = result["messages"]
 
-        from langchain_core.messages import HumanMessage
-        start_idx = 0
-        for i in range(len(messages) - 1, -1, -1):
-            if isinstance(messages[i], HumanMessage):
-                start_idx = i + 1
-                break
+        for attempt in range(max_retries + 1):
+            result = self.agent.invoke({"messages": [("user", question)]}, config=config)
+            messages = result["messages"]
 
-        for msg in messages[start_idx:]:
-            if hasattr(msg, "tool_calls") and msg.tool_calls:
-                for tc in msg.tool_calls:
-                    logger.info(f"  → 도구 호출: {tc['name']} | 입력: {tc['args']}")
-            elif hasattr(msg, "name") and msg.name:
-                preview = str(msg.content)[:120].replace("\n", " ")
-                logger.info(f"  ← 도구 결과 [{msg.name}]: {preview}...")
+            from langchain_core.messages import HumanMessage
+            start_idx = 0
+            for i in range(len(messages) - 1, -1, -1):
+                if isinstance(messages[i], HumanMessage):
+                    start_idx = i + 1
+                    break
 
-        answer = messages[-1].content
-        if isinstance(answer, list):
-            answer = "\n".join(
-                block["text"]
-                for block in answer
-                if isinstance(block, dict) and block.get("type") == "text"
-            )
-        logger.info(f"답변 [{thread_id}]: {answer[:200]}")
-        return answer
+            for msg in messages[start_idx:]:
+                if hasattr(msg, "tool_calls") and msg.tool_calls:
+                    for tc in msg.tool_calls:
+                        logger.info(f"  → 도구 호출: {tc['name']} | 입력: {tc['args']}")
+                elif hasattr(msg, "name") and msg.name:
+                    preview = str(msg.content)[:120].replace("\n", " ")
+                    logger.info(f"  ← 도구 결과 [{msg.name}]: {preview}...")
+
+            answer = self._extract_answer(messages[-1].content)
+
+            if answer.strip():
+                logger.info(f"답변 [{thread_id}]: {answer[:200]}")
+                return answer
+
+            if attempt < max_retries:
+                logger.warning(f"빈 답변 감지 (시도 {attempt + 1}/{max_retries + 1}), 재시도합니다.")
+            else:
+                logger.warning(f"빈 답변 — 재시도 {max_retries}회 모두 실패")
+
+        return "죄송합니다. 일시적으로 답변을 생성하지 못했습니다. 다시 질문해 주세요."
+
+    @staticmethod
+    def _extract_answer(content) -> str:
+        """LLM 응답에서 텍스트를 추출. thinking 블록 등 비텍스트 블록 대응."""
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            parts = []
+            for block in content:
+                if isinstance(block, str):
+                    parts.append(block)
+                elif isinstance(block, dict) and block.get("type") == "text" and block.get("text"):
+                    parts.append(block["text"])
+            return "\n".join(parts)
+        return str(content) if content else ""
 
     def ask_with_steps(self, question: str, thread_id: str = "default") -> dict:
         """답변과 함께 도구 사용 과정도 반환. 디버깅/UI 표시용."""

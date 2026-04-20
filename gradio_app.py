@@ -129,7 +129,7 @@ with gr.Blocks() as zoom_tab:
 
 # ── 앱 실행 ───────────────────────────────────────────────────────────────────
 
-with gr.Blocks(theme=gr.themes.Default()) as demo:
+with gr.Blocks() as demo:
     with gr.Tab("챗봇"):
         chatbot_tab.render()
     with gr.Tab("줌 출석로그 집계"):
@@ -138,4 +138,4 @@ with gr.Blocks(theme=gr.themes.Default()) as demo:
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 7860))
     demo.queue()
-    demo.launch(server_name="0.0.0.0", server_port=port)
+    demo.launch(server_name="0.0.0.0", server_port=port, theme=gr.themes.Default())
