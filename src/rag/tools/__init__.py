@@ -34,4 +34,7 @@ def get_tools(resume_store=None, curriculum_store=None) -> list:
     from src.rag.tools.chromadb.web_search_tool import get_web_search_tool
     tools += get_web_search_tool()
 
+    from src.rag.tools.chromadb.curriculum_gen_tool import get_curriculum_gen_tool
+    tools += get_curriculum_gen_tool()
+
     return tools
