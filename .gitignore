@@ -38,6 +38,7 @@ chatbot-architecture.png
 
 #gcp
 convert_to_bq_test.py
+src/rag/tools/gcp/
 
 # firebase
 .firebase/

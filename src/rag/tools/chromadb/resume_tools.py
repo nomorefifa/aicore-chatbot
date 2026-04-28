@@ -7,28 +7,24 @@
 """
 
 from langchain_core.tools import tool
-from src.embedding.embedder import EmbeddingStore
 
 
-def _resolve_instructor_name(store: EmbeddingStore, instructor_name: str) -> str | None:
+def _resolve_instructor_name(store, instructor_name: str) -> str | None:
     """
     입력된 이름과 DB에 저장된 이름의 공백 차이를 무시하고 정확한 이름을 반환.
     예: '유진혁' → '유 진 혁'
     없으면 None 반환.
     """
     query_norm = instructor_name.replace(" ", "")
-    result = store.db._collection.get(
-        where={"section": "프로필"},
-        include=["metadatas"],
-    )
-    for meta in result["metadatas"]:
-        stored = meta["instructor_name"]
+    items = store.get_by_metadata({"section": "프로필"})
+    for item in items:
+        stored = item["metadata"]["instructor_name"]
         if stored == instructor_name or stored.replace(" ", "") == query_norm:
             return stored
     return None
 
 
-def get_resume_tools(store: EmbeddingStore) -> list:
+def get_resume_tools(store) -> list:
     """강사 이력서 검색 도구 목록 반환"""
 
     @tool
@@ -81,21 +77,15 @@ def get_resume_tools(store: EmbeddingStore) -> list:
         if not matched_name:
             return f"'{instructor_name}' 강사를 찾지 못했습니다. 이름을 다시 확인하세요."
 
-        result = store.db._collection.get(
-            where={"instructor_name": matched_name},
-            include=["documents", "metadatas"],
-        )
-        if not result["documents"]:
+        items = store.get_by_metadata({"instructor_name": matched_name})
+        if not items:
             return f"'{matched_name}' 강사 정보를 찾지 못했습니다."
 
         section_order = {"프로필": 0, "학력": 1, "경력": 2, "강의이력": 3, "자격증": 4}
-        items = sorted(
-            zip(result["documents"], result["metadatas"]),
-            key=lambda x: section_order.get(x[1].get("section", ""), 99),
-        )
+        items = sorted(items, key=lambda x: section_order.get(x["metadata"].get("section", ""), 99))
         return "\n\n".join(
-            f"[{meta['section']}]\n{doc}"
-            for doc, meta in items
+            f"[{item['metadata']['section']}]\n{item['content']}"
+            for item in items
         )
 
     @tool
@@ -104,20 +94,14 @@ def get_resume_tools(store: EmbeddingStore) -> list:
         DB에 저장된 전체 강사 목록을 반환합니다. 각 강사의 이름, 연락처, 이메일, 전문분야를 포함합니다.
         '강사 몇 명이야', '전체 강사 보여줘', '강사 리스트 뽑아줘', '연락처 목록' 같은 질문에 사용하세요.
         """
-        result = store.db._collection.get(
-            where={"section": "프로필"},
-            include=["documents", "metadatas"],
-        )
-        if not result["documents"]:
+        items = store.get_by_metadata({"section": "프로필"})
+        if not items:
             return "등록된 강사가 없습니다."
 
-        items = sorted(
-            zip(result["documents"], result["metadatas"]),
-            key=lambda x: x[1]["instructor_name"],
-        )
+        items = sorted(items, key=lambda x: x["metadata"]["instructor_name"])
         lines = [f"총 {len(items)}명의 강사가 등록되어 있습니다.\n"]
-        for i, (doc, _) in enumerate(items, 1):
-            lines.append(f"{i}. {doc}")
+        for i, item in enumerate(items, 1):
+            lines.append(f"{i}. {item['content']}")
         return "\n".join(lines)
 
     return [search_instructor, search_teaching_history, get_instructor_detail, list_all_instructors]

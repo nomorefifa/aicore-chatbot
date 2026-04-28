@@ -134,11 +134,18 @@ class ResumeAgent:
             tools = get_tools()
             logger.info("GCP 모드: Vertex AI Search + BigQuery")
         else:
-            from src.embedding.embedder import EmbeddingStore
-            resume_store     = EmbeddingStore(collection_name=resume_collection,     db_dir=db_dir)
-            curriculum_store = EmbeddingStore(collection_name=curriculum_collection, db_dir=db_dir)
+            use_weaviate = os.getenv("USE_WEAVIATE", "false").lower() == "true"
+            if use_weaviate:
+                from src.embedding.weaviate_embedder import WeaviateEmbeddingStore
+                resume_store     = WeaviateEmbeddingStore(collection_name=resume_collection)
+                curriculum_store = WeaviateEmbeddingStore(collection_name=curriculum_collection)
+                logger.info("로컬 모드: Weaviate (이력서 + 커리큘럼) + Gemini 웹검색")
+            else:
+                from src.embedding.embedder import EmbeddingStore
+                resume_store     = EmbeddingStore(collection_name=resume_collection,     db_dir=db_dir)
+                curriculum_store = EmbeddingStore(collection_name=curriculum_collection, db_dir=db_dir)
+                logger.info("로컬 모드: ChromaDB (이력서 + 커리큘럼) + Gemini 웹검색")
             tools = get_tools(resume_store=resume_store, curriculum_store=curriculum_store)
-            logger.info("로컬 모드: ChromaDB (이력서 + 커리큘럼) + Gemini 웹검색")
 
         self.memory = MemorySaver()
         system_prompt = _build_system_prompt()

@@ -7,6 +7,8 @@ google-generativeai>=0.8.0
 
 # Vector DB
 chromadb==1.5.5
+weaviate-client>=4.9.0
+langchain-weaviate>=0.0.3
 
 # LangGraph (Agent)
 langgraph>=1.0.0
