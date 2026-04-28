@@ -73,6 +73,47 @@ def _normalize_name(name: str) -> str:
     return name.strip("_")
 
 
+def _get_number_id(name: str) -> str | None:
+    """이름에서 숫자 식별자 추출. 없으면 None."""
+    m = re.search(r"[가-힣][\s_]?(\d{3,})", name)
+    if m:
+        return m.group(1)
+    m = re.match(r"^(\d{4,})[\s_]?[가-힣]", name)
+    if m:
+        return m.group(1)
+    return None
+
+
+def _post_validate_number_groups(name_map: dict[str, str]) -> dict[str, str]:
+    """
+    Gemini가 숫자 ID가 다른 동명이인을 병합한 경우 강제 분리.
+    같은 그룹 내에 서로 다른 숫자 ID가 있으면 ID별로 분리.
+    """
+    rep_to_names: dict[str, list[str]] = {}
+    for orig, rep in name_map.items():
+        rep_to_names.setdefault(rep, []).append(orig)
+
+    new_map: dict[str, str] = {}
+    for rep, members in rep_to_names.items():
+        id_buckets: dict[str, list[str]] = {}
+        for n in members:
+            nid = _get_number_id(n) or "__none__"
+            id_buckets.setdefault(nid, []).append(n)
+
+        # 숫자 ID가 있는 버킷이 2개 이상 → 잘못 병합된 동명이인 → 강제 분리
+        numbered_buckets = {k: v for k, v in id_buckets.items() if k != "__none__"}
+        if len(numbered_buckets) > 1:
+            for nid, bucket_names in id_buckets.items():
+                bucket_rep = _normalize_name(max(bucket_names, key=len))
+                for n in bucket_names:
+                    new_map[n] = bucket_rep
+        else:
+            for n in members:
+                new_map[n] = rep
+
+    return new_map
+
+
 def _gemini_group_names(names: list[str]) -> dict[str, str]:
     """
     Gemini API를 사용해 같은 사람으로 보이는 이름들을 그룹화.
@@ -278,6 +319,8 @@ def process_zoom_log(file_bytes: bytes) -> tuple[pd.DataFrame, bytes]:
     # 2단계: Gemini로 약칭/구분자 차이 등 추가 병합
     unique_names = df["학생이름"].unique().tolist()
     name_map = _gemini_group_names(unique_names)
+    # 숫자 ID가 다른 동명이인을 Gemini가 잘못 병합한 경우 강제 분리
+    name_map = _post_validate_number_groups(name_map)
     df["학생이름"] = df["학생이름"].map(name_map).fillna(df["학생이름"])
 
     # 총 시간 합산
