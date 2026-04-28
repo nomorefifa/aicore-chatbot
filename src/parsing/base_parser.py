@@ -47,11 +47,23 @@ class DocumentParser:
         llm = ChatGoogleGenerativeAI(model=llm_model, temperature=0)
         self.structured_llm = llm.with_structured_output(model_class)
 
-    def extract_text(self, file_path: Path) -> str:
+    _OLE2_MAGIC = b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1'
+
+    def _detect_format(self, file_path: Path) -> str:
+        """확장자가 잘못된 경우를 대비해 magic bytes로 실제 포맷 감지."""
         suffix = file_path.suffix.lower()
+        if suffix == '.docx':
+            with open(file_path, 'rb') as f:
+                header = f.read(8)
+            if header == self._OLE2_MAGIC:
+                return '.hwp'
+        return suffix
+
+    def extract_text(self, file_path: Path) -> str:
+        suffix = self._detect_format(file_path)
         if suffix in ('.hwp', '.hwpx'):
-            from .hwp_parser import extract_text
-            return extract_text(file_path)
+            from .hwp_parser import extract_text as hwp_extract
+            return hwp_extract(file_path, force_hwp=True)
         elif suffix == '.pdf':
             from .pdf_parser import extract_text
             return extract_text(file_path)

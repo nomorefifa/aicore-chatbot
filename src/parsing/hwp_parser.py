@@ -116,11 +116,12 @@ def extract_hwpx_text(file_path: str | Path) -> str:
     return "\n".join(texts)
 
 
-def extract_text(file_path: str | Path) -> str:
-    """확장자에 따라 .hwp / .hwpx 텍스트 추출 자동 분기"""
+def extract_text(file_path: str | Path, force_hwp: bool = False) -> str:
+    """확장자에 따라 .hwp / .hwpx 텍스트 추출 자동 분기.
+    force_hwp=True 이면 확장자에 상관없이 OLE2 .hwp 형식으로 파싱."""
     file_path = Path(file_path)
     suffix = file_path.suffix.lower()
-    if suffix == ".hwp":
+    if force_hwp or suffix == ".hwp":
         return extract_hwp_text(file_path)
     elif suffix == ".hwpx":
         return extract_hwpx_text(file_path)
