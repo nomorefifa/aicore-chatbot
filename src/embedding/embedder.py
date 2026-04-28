@@ -132,6 +132,20 @@ class EmbeddingStore:
         """현재 DB에 저장된 총 청크 수"""
         return self.db._collection.count()
 
+    def get_by_metadata(self, filter_dict: dict) -> list[dict]:
+        """
+        메타데이터 필터로 문서 전체 조회.
+        반환: [{"content": str, "metadata": dict}, ...]
+        """
+        result = self.db._collection.get(
+            where=filter_dict,
+            include=["documents", "metadatas"],
+        )
+        return [
+            {"content": doc, "metadata": meta}
+            for doc, meta in zip(result["documents"], result["metadatas"])
+        ]
+
     def delete_collection(self) -> None:
         """컬렉션 초기화 (재색인 시 사용)"""
         self.db.delete_collection()
