@@ -72,6 +72,7 @@ def main():
     parser = argparse.ArgumentParser(description="문서 파싱 실행")
     parser.add_argument("--doc_type", required=True, choices=list(DOC_TYPE_CONFIG.keys()))
     parser.add_argument("--gcs_bucket", default=None, help="GCS 버킷명 (예: aicore-chatbot-public)")
+    parser.add_argument("--gcs_path", default=None, help="GCS 커스텀 경로 (예: raw/resume/retry/). --gcs_bucket과 함께 사용")
     args = parser.parse_args()
 
     config = DOC_TYPE_CONFIG[args.doc_type]
@@ -80,7 +81,7 @@ def main():
     success, fail = 0, 0
 
     if args.gcs_bucket:
-        gcs_raw = f"gs://{args.gcs_bucket}/raw/{args.doc_type}/"
+        gcs_raw = f"gs://{args.gcs_bucket}/{args.gcs_path}" if args.gcs_path else f"gs://{args.gcs_bucket}/raw/{args.doc_type}/"
         gcs_parsed = f"gs://{args.gcs_bucket}/parsed/{args.doc_type}/done/"
 
         with tempfile.TemporaryDirectory() as tmp:
