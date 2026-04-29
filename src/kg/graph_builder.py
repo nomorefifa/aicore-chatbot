@@ -216,7 +216,6 @@ def build_from_local(doc_type: str, store: GraphStore) -> None:
 
 def build_from_gcs(doc_type: str, gcs_bucket: str, store: GraphStore) -> None:
     from google.cloud import storage
-    import tempfile
 
     client = storage.Client()
     bucket = client.bucket(gcs_bucket)

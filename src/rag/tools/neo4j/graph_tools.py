@@ -46,10 +46,12 @@ def get_graph_tools() -> list:
             """
             MATCH (i:Instructor)-[r:TAUGHT_AT|WORKED_AT]->(o:Organization)
             WHERE toLower(o.name) CONTAINS toLower($org)
-            RETURN i.name AS name,
-                   type(r) AS rel_type,
-                   o.name AS org,
-                   r.period AS period
+            WITH i, collect({
+                rel_type: type(r),
+                org: o.name,
+                period: r.period
+            }) AS roles
+            RETURN i.name AS name, i.email AS email, roles
             ORDER BY i.name
             """,
             org=organization,
@@ -59,8 +61,11 @@ def get_graph_tools() -> list:
 
         lines = [f"'{organization}' 관련 강사 {len(rows)}명\n"]
         for r in rows:
-            rel = "강의" if r["rel_type"] == "TAUGHT_AT" else "근무"
-            lines.append(f"- {r['name']} | {r['org']} ({rel}) | 기간: {r['period']}")
+            role_parts = []
+            for role in r["roles"]:
+                rel = "강의" if role["rel_type"] == "TAUGHT_AT" else "근무"
+                role_parts.append(f"{role['org']} ({rel}, {role['period']})")
+            lines.append(f"- {r['name']} | {' / '.join(role_parts)}")
         return "\n".join(lines)
 
     @tool
