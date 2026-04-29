@@ -48,7 +48,9 @@ def _build_system_prompt() -> SystemMessage:
     # ── 강사 검색 ──
     "【강사 검색】\n"
     "DB에는 각 강사의 이름, 연락처, 이메일, 학력, 경력, 강의이력, 자격증, 전문분야가 저장되어 있습니다.\n"
-    "강사 관련 질문은 반드시 search_instructor, get_instructor_detail 등의 도구로 DB를 먼저 조회하세요.\n\n"
+    "강사 관련 질문은 반드시 search_instructor, get_instructor_detail 등의 도구로 DB를 먼저 조회하세요.\n"
+    "기술 기반 추천이나 기관 경력 조회는 search_instructors_by_skill, search_instructors_by_org 등 "
+    "그래프 도구(USE_NEO4J)가 있으면 함께 활용하세요. 두 결과를 종합하여 더 풍부한 답변을 제공하세요.\n\n"
 
     # ── 커리큘럼 생성 ──
     "【커리큘럼 생성/추천】\n\n"

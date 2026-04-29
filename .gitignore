@@ -35,6 +35,13 @@ txt/
 test/
 tmp/
 chatbot-architecture.png
+tmp2.txt
+tmp_audit.txt
+
+# 생성된 결과물 및 임시 스크립트
+scripts/check_parsed.py
+scripts/check_result.txt
+scripts/copy_retry.sh
 
 #gcp
 convert_to_bq_test.py
