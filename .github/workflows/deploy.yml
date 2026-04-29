@@ -23,8 +23,12 @@ jobs:
       - name: Docker 빌드 및 Artifact Registry 푸시
         run: |
           gcloud auth configure-docker asia-northeast3-docker.pkg.dev --quiet
-          docker build -t asia-northeast3-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/aicore-chatbot-image/app:${{ github.sha }} .
+          docker build \
+            -t asia-northeast3-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/aicore-chatbot-image/app:${{ github.sha }} \
+            -t asia-northeast3-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/aicore-chatbot-image/app:latest \
+            .
           docker push asia-northeast3-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/aicore-chatbot-image/app:${{ github.sha }}
+          docker push asia-northeast3-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/aicore-chatbot-image/app:latest
 
       - name: Cloud Run 배포
         run: |
