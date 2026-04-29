@@ -39,14 +39,17 @@ def get_curriculum_tools(store: EmbeddingStore) -> list:
         특정 도메인/기술 분야의 커리큘럼을 검색합니다.
         예: 'AI', 'LLM', '클라우드', '데이터분석', 'IoT', '컴퓨터비전'
         """
+        # ChromaDB: filter 키워드로 과정개요 섹션만 조회
+        # Weaviate: filter 파라미터 무시 → 전체 검색 후 Python에서 필터
         docs = store.db.similarity_search(domain, k=8, filter={"section": "과정개요"})
+        if not docs:
+            docs = store.db.similarity_search(domain, k=8)
+
         if not docs:
             return f"'{domain}' 관련 커리큘럼을 찾지 못했습니다."
 
-        results = []
-        for doc in docs:
-            results.append(doc.page_content)
-        return "\n\n".join(results)
+        target = [d for d in docs if d.metadata.get("section") == "과정개요"] or docs
+        return "\n\n".join(d.page_content for d in target)
 
     @tool
     def get_curriculum_detail(course_name: str) -> str:
@@ -57,12 +60,13 @@ def get_curriculum_tools(store: EmbeddingStore) -> list:
         section_order = {"과정개요": 0, "모듈": 1, "주차": 2}
 
         # ChromaDB 백엔드: 메타데이터 필터로 정확한 과정명 전체 조회
-        if hasattr(store.db, "_collection"):
-            result = store.db._collection.get(
+        _col = getattr(store.db, "_collection", None)
+        if _col is not None and hasattr(_col, "get"):
+            result = _col.get(
                 where={"course_name": course_name},
                 include=["documents", "metadatas"],
             )
-            if result["documents"]:
+            if result and result["documents"]:
                 items = sorted(
                     zip(result["documents"], result["metadatas"]),
                     key=lambda x: section_order.get(x[1].get("section", ""), 99),
