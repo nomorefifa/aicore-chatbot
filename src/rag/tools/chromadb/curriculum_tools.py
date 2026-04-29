@@ -54,28 +54,37 @@ def get_curriculum_tools(store: EmbeddingStore) -> list:
         특정 과정의 전체 커리큘럼(모듈/주차별 세부 내용)을 조회합니다.
         과정명을 입력하세요. 예: 'Python 데이터분석', 'AWS Solution Architect'
         """
-        result = store.db._collection.get(
-            where={"course_name": course_name},
-            include=["documents", "metadatas"],
-        )
-        if not result["documents"]:
-            # 정확한 이름 매칭 실패 시 유사도 검색으로 fallback
-            docs = store.db.similarity_search(course_name, k=6)
-            if not docs:
-                return f"'{course_name}' 과정을 찾지 못했습니다."
-            return "\n\n".join(
-                f"[{doc.metadata.get('section','')}]\n{doc.page_content}"
-                for doc in docs
-            )
-
         section_order = {"과정개요": 0, "모듈": 1, "주차": 2}
-        items = sorted(
-            zip(result["documents"], result["metadatas"]),
-            key=lambda x: section_order.get(x[1].get("section", ""), 99),
+
+        # ChromaDB 백엔드: 메타데이터 필터로 정확한 과정명 전체 조회
+        if hasattr(store.db, "_collection"):
+            result = store.db._collection.get(
+                where={"course_name": course_name},
+                include=["documents", "metadatas"],
+            )
+            if result["documents"]:
+                items = sorted(
+                    zip(result["documents"], result["metadatas"]),
+                    key=lambda x: section_order.get(x[1].get("section", ""), 99),
+                )
+                return "\n\n".join(
+                    f"[{meta.get('section','')}]\n{doc}"
+                    for doc, meta in items
+                )
+
+        # Weaviate 백엔드 또는 ChromaDB fallback: 유사도 검색 후 Python 필터
+        docs = store.db.similarity_search(course_name, k=10)
+        if not docs:
+            return f"'{course_name}' 과정을 찾지 못했습니다."
+
+        exact = [d for d in docs if d.metadata.get("course_name", "") == course_name]
+        target = sorted(
+            exact if exact else docs,
+            key=lambda d: section_order.get(d.metadata.get("section", ""), 99),
         )
         return "\n\n".join(
-            f"[{meta.get('section','')}]\n{doc}"
-            for doc, meta in items
+            f"[{doc.metadata.get('section','')}]\n{doc.page_content}"
+            for doc in target
         )
 
     return [search_curriculum, search_curriculum_by_domain, get_curriculum_detail]
