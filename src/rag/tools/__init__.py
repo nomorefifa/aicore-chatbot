@@ -37,4 +37,9 @@ def get_tools(resume_store=None, curriculum_store=None) -> list:
     from src.rag.tools.chromadb.curriculum_gen_tool import get_curriculum_gen_tool
     tools += get_curriculum_gen_tool()
 
+    use_neo4j = os.getenv("USE_NEO4J", "false").lower() == "true"
+    if use_neo4j:
+        from src.rag.tools.neo4j.graph_tools import get_graph_tools
+        tools += get_graph_tools()
+
     return tools

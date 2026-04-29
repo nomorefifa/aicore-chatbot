@@ -36,3 +36,6 @@ google-genai
 google-cloud-storage
 google-cloud-discoveryengine
 google-cloud-bigquery
+
+# Knowledge Graph
+neo4j>=5.0.0
