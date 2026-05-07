@@ -49,3 +49,10 @@ src/rag/tools/gcp/
 
 # firebase
 .firebase/
+
+# Terraform (민감값/로컬 상태 제외)
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfvars
+terraform/*.tfstate
+terraform/*.tfstate.backup

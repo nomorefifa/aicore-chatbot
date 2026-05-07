@@ -1,0 +1,7 @@
+# 실제 값은 terraform.tfvars에 입력 (gitignore 처리됨)
+project_id     = "your-gcp-project-id"
+neo4j_password = "your-neo4j-password"
+
+# 선택 오버라이드 (기본값 사용 시 생략 가능)
+# vm_start_schedule = "0 0 * * 1-5"   # KST 09:00 월-금
+# vm_stop_schedule  = "0 10 * * 1-5"  # KST 19:00 월-금
