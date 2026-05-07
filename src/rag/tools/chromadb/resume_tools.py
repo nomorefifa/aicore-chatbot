@@ -57,9 +57,8 @@ def get_resume_tools(store) -> list:
         특정 과목, 기관, 강의 경험을 찾을 때 사용하세요.
         예: 'Python 강의', '삼성 강의 경험', '데이터분석 과정'
         """
-        docs = store.db.similarity_search(
-            query, k=8, filter={"section": "강의이력"}
-        )
+        docs = store.db.similarity_search(query, k=20)
+        docs = [d for d in docs if d.metadata.get("section") == "강의이력"][:8]
         if not docs:
             return "관련 강의이력을 찾지 못했습니다."
         return "\n\n".join(
