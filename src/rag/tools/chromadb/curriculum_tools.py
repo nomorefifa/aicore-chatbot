@@ -39,11 +39,7 @@ def get_curriculum_tools(store: EmbeddingStore) -> list:
         특정 도메인/기술 분야의 커리큘럼을 검색합니다.
         예: 'AI', 'LLM', '클라우드', '데이터분석', 'IoT', '컴퓨터비전'
         """
-        # ChromaDB: filter 키워드로 과정개요 섹션만 조회
-        # Weaviate: filter 파라미터 무시 → 전체 검색 후 Python에서 필터
-        docs = store.db.similarity_search(domain, k=8, filter={"section": "과정개요"})
-        if not docs:
-            docs = store.db.similarity_search(domain, k=8)
+        docs = store.db.similarity_search(domain, k=8)
 
         if not docs:
             return f"'{domain}' 관련 커리큘럼을 찾지 못했습니다."

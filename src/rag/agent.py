@@ -128,7 +128,11 @@ class ResumeAgent:
         curriculum_collection: str = "curriculum_docs",
         db_dir: str = "data/vector_db",
     ):
-        llm = ChatGoogleGenerativeAI(model=model, temperature=0)
+        llm = ChatGoogleGenerativeAI(
+            model=model,
+            temperature=1,
+            model_kwargs={"thinking": {"type": "disabled"}},
+        )
 
         use_gcp = os.getenv("USE_GCP_SERVICES", "false").lower() == "true"
 
